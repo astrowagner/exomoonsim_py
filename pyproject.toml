@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "exomoonsim"
+version = "0.1.0"
+description = "Astrometric exomoon-detection simulator (Python port of the IDL exomoonsim)"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Kevin Wagner", email = "kwagner059@gmail.com" }]
+keywords = ["astronomy", "astrometry", "exoplanets", "exomoons", "simulation"]
+dependencies = ["numpy>=1.22", "matplotlib>=3.5"]
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Astronomy",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+
+[project.urls]
+Homepage = "https://github.com/astrowagner/exomoonsim"
+Repository = "https://github.com/astrowagner/exomoonsim"
+
+[project.scripts]
+exomoon-survey = "exomoonsim.cli:main"
+
+[tool.setuptools]
+packages = ["exomoonsim"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
