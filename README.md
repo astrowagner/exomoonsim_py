@@ -22,8 +22,8 @@ succeeds. It's a modernized Python port of an IDL codebase (pure `numpy` +
 Python ≥ 3.9. Only `numpy` and `matplotlib` are required.
 
 ```bash
-git clone https://github.com/kwagner/exomoonsim.git
-cd exomoonsim
+git clone https://github.com/astrowagner/exomoonsim_py.git
+cd exomoonsim_py
 pip install -e .            # installs the package + the `exomoon-survey` command
 # for the tests too:  pip install -e ".[test]"
 ```
