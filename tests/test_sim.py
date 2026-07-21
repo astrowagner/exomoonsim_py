@@ -34,3 +34,12 @@ def test_reproducible_with_seed():
     a = run_trial(p, seed=7)
     b = run_trial(p, seed=7)
     assert a["sig"] == b["sig"] and a["perr"] == b["perr"]
+
+
+def test_zero_mass_moon_no_crash():
+    """Zero-mass moon (no-signal control cell): no divide-by-zero; amp error is inf."""
+    p = fast_params(moon_a=10.0, moon_mass=0.0)
+    r = run_trial(p, seed=1)
+    assert r["input_amp"] == 0.0
+    assert np.isinf(r["amperr"])      # fails the amplitude cut -> not "detected"
+    assert np.isfinite(r["sig"])      # significance is still computable

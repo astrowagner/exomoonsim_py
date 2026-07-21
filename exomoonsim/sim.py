@@ -197,7 +197,10 @@ def run_trial(params: SimParams = None, seed=None):
 
     # ---- amplitude from a final phase-fold + sine fit at the best period ----
     retrieved_amp = _amplitude_at(tdays, rres, rres2, best_pp, p.binwidth, p.window) * 1000.0 * d
-    amperr = abs(retrieved_amp - input_amp) / input_amp * 100.0
+    # input_amp == 0 only for a zero-mass moon (the no-signal control cell); IDL's
+    # float divide yields Inf there, so mirror that rather than raising.
+    amperr = (abs(retrieved_amp - input_amp) / input_amp * 100.0
+              if input_amp != 0 else np.inf)
 
     return dict(sig=float(sig_val), perr=float(perr), amperr=float(amperr),
                 resav=float(resav), best_period=float(best_pp),
