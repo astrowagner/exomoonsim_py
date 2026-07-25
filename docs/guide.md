@@ -121,3 +121,38 @@ sine fit is solved exactly by linear least squares. Because the fit is tighter, 
 absolute significance runs a few times higher than the IDL for the same signal —
 the port is simply more sensitive. Results are not bit-for-bit identical to the IDL
 (different RNG and fitter); validate statistically, by distribution and map shape.
+
+---
+
+## 7. Multiple moons
+
+A planet can host more than one moon. Set `SimParams.moons` to a list of `Moon`
+objects (each with its own `a`, `mass`, inclination, eccentricity, and nodes); the
+scalar `moon_*` fields then just describe a default single moon, so leaving `moons`
+unset reproduces the single-moon results exactly.
+
+**Simulation.** The planet's wobble is the linear **superposition** of each moon's
+reflex — every moon `i` pulls the planet with semi-amplitude
+`cmᵢ = mᵢ/(M_p+Σm)·aᵢ` at its own period. This treats the moons as independent
+Keplerians; it deliberately ignores moon–moon gravitational interactions and
+resonances (a full N-body treatment is out of scope).
+
+**Which moon is "detected".** The detector still does a blind search and pulls out
+the single most discernible signal first. So we define the **primary** moon as the
+one with the largest reflex, i.e. the largest `m·a`, and score the recovered period
+and amplitude against it — mirroring a real search with no prior knowledge. (Pulling
+the primary out, subtracting it, and searching again for the next-largest is the
+natural *phase 2*: iterative recovery of the whole retinue.)
+
+**The confusion survey.** `SurveyConfig.companions` is a fixed set of moons present
+in every trial; the survey then sweeps a *target* moon over `(a, mass)` on top of
+them and scores the **system primary**. Where the target dominates, the maps read as
+target detectability; where a companion dominates, they reflect the companion. The
+50% detection contour therefore traces the **confusion boundary** — where the moon
+under study becomes the most discernible signal in its system. The false-positive
+map likewise picks up beat/alias structure between moons.
+
+**Validation.** The original IDL is single-moon, so there is no ground truth for
+multi-moon — this is new science beyond the port. It is checked internally: `N=1`
+reproduces the single-moon pipeline exactly, and the primary is selected by `m·a`
+regardless of list order.

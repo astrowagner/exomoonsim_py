@@ -64,11 +64,14 @@ plot_survey(res, filename="survey.png")
 
 See [`examples/getting_started.py`](examples/getting_started.py) for a fully
 commented walkthrough, and [`notebooks/example.ipynb`](notebooks/example.ipynb) for
-an interactive version.
+an interactive version. To inspect a *single* trial — its on-sky track, the moon
+signal in the residual, the periodogram, and the phase-folded detection — see
+[`examples/single_trial_diagnostics.py`](examples/single_trial_diagnostics.py)
+(`run_trial(..., return_diagnostics=True)` fed to `plots.plot_trial`).
 
 ## What you get out
 
-Each survey produces four maps over (moon semimajor axis, moon mass):
+Each survey produces six maps over (moon semimajor axis, moon mass):
 
 | output | meaning |
 |---|---|
@@ -76,6 +79,8 @@ Each survey produces four maps over (moon semimajor axis, moon mass):
 | **period error (%)** | error in the recovered sidereal moon period |
 | **amplitude error (%)** | error in the recovered wobble amplitude |
 | **detection fraction** | fraction of trials passing all cuts — the headline result |
+| **false-positive fraction** | fraction where significance fires but on the *wrong* period (a spurious/noise peak) |
+| **input signal amplitude** | the true wobble semi-amplitude (mas) — the physical driver; detection tracks a line of ~constant amplitude/SNR |
 
 ## Package layout
 
@@ -86,7 +91,7 @@ exomoonsim/
   fit.py         orbit fit (Levenberg-Marquardt) + fixed-period sine fit
   sim.py         SimParams + run_trial (one simulated campaign)
   survey.py      SurveyConfig + run_survey (parallel grid) + save/load
-  plots.py       the four-panel figure
+  plots.py       survey figure (plot_survey) + single-trial diagnostics (plot_trial)
   cli.py         the `exomoon-survey` command
 docs/guide.md    the science + algorithm, explained
 examples/        runnable example scripts
@@ -120,6 +125,10 @@ pytest              # ~a few seconds
   flows through the survey automatically (it's a dataclass).
 - **Different plot**: `plots.plot_survey` returns a matplotlib `Figure` you can
   restyle; or call `SurveyResult.load(...)` and plot the cubes yourself.
+- **Multiple moons**: set `SimParams.moons` to a list of `Moon` objects — the planet's
+  wobble superposes them, and recovery is scored against the *primary* (largest m·a),
+  as a blind search would. For surveys, `SurveyConfig.companions` adds fixed moons to
+  every trial so the detection map becomes a confusion map. See `docs/guide.md` §7.
 
 ## Notes / provenance
 
