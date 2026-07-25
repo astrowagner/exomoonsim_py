@@ -218,31 +218,31 @@ def plot_trial(diag, filename=None, figsize=(14, 11), dpi=140):
 
     # (1) on-sky track, full
     a = ax[0, 0]
-    a.plot(xt, yt, "-", color=_C_TRUE, lw=0.8, label="true path")
-    a.scatter(xo, yo, s=1.5, color=_C_OBS, alpha=0.20, label="observed")
-    a.plot(xf, yf, "-", color=_C_FIT, lw=0.8, label="best-fit orbit")
-    a.plot(xc, yc, ":", color="0.3", lw=0.8, label="barycenter")
+    a.plot(xt, yt, "-", color=_C_TRUE, lw=0.8, label="True Path")
+    a.scatter(xo, yo, s=1.5, color=_C_OBS, alpha=0.20, label="Observed")
+    a.plot(xf, yf, "-", color=_C_FIT, lw=0.8, label="Best-Fit Orbit")
+    a.plot(xc, yc, ":", color="0.3", lw=0.8, label="Barycenter")
     a.set_aspect("equal", "datalim")
     a.set_xlabel("X (arcsec)"); a.set_ylabel("Y (arcsec)")
-    a.set_title("On-sky track (full)"); a.legend(fontsize=6, loc="best")
+    a.set_title("On-Sky Track (Full)"); a.legend(fontsize=6, loc="best")
 
     # (2) observed separation vs time
     a = ax[0, 1]
-    a.scatter(td, obs_r * MAS, s=1.5, color=_C_OBS, alpha=0.20, label="observed")
-    a.plot(td, true_r * MAS, "-", color=_C_TRUE, lw=0.6, label="true")
-    a.plot(td, pred_r * MAS, "-", color=_C_FIT, lw=0.6, label="fit")
+    a.scatter(td, obs_r * MAS, s=1.5, color=_C_OBS, alpha=0.20, label="Observed")
+    a.plot(td, true_r * MAS, "-", color=_C_TRUE, lw=0.6, label="True")
+    a.plot(td, pred_r * MAS, "-", color=_C_FIT, lw=0.6, label="Fit")
     a.set_xlabel("Time (days)"); a.set_ylabel("Separation (mas)")
-    a.set_title("Observed separation"); a.legend(fontsize=6)
+    a.set_title("Observed Separation"); a.legend(fontsize=6)
 
     # (3) observed separation vs observation number (zoom) + barycenter
     a = ax[0, 2]
     idx = np.arange(int(zoom.sum()))
-    a.scatter(idx, obs_r[zoom] * MAS, s=8, color=_C_OBS, alpha=0.5, label="observed")
-    a.plot(idx, true_r[zoom] * MAS, "-", color=_C_TRUE, lw=0.8, label="true")
-    a.plot(idx, pred_r[zoom] * MAS, "-", color=_C_FIT, lw=0.8, label="fit")
-    a.plot(idx, com_r[zoom] * MAS, ":", color="0.3", lw=0.8, label="barycenter")
-    a.set_xlabel("Observation number"); a.set_ylabel("Separation (mas)")
-    a.set_title("Separation (first %d d)" % int(3 * bp)); a.legend(fontsize=6)
+    a.scatter(idx, obs_r[zoom] * MAS, s=8, color=_C_OBS, alpha=0.5, label="Observed")
+    a.plot(idx, true_r[zoom] * MAS, "-", color=_C_TRUE, lw=0.8, label="True")
+    a.plot(idx, pred_r[zoom] * MAS, "-", color=_C_FIT, lw=0.8, label="Fit")
+    a.plot(idx, com_r[zoom] * MAS, ":", color="0.3", lw=0.8, label="Barycenter")
+    a.set_xlabel("Observation Number"); a.set_ylabel("Separation (mas)")
+    a.set_title("Separation (First %d d)" % int(3 * bp)); a.legend(fontsize=6)
 
     # (4) residual vs time, full
     a = ax[1, 0]
@@ -253,7 +253,7 @@ def plot_trial(diag, filename=None, figsize=(14, 11), dpi=140):
     a.plot(td, srres * MAS, "-", color=_C_TRUE, lw=0.6)
     a.axhline(0, color="0.6", lw=0.5, ls="--")
     a.set_xlabel("Time (days)"); a.set_ylabel("Residual (mas)")
-    a.set_title("Residual (planet subtracted)")
+    a.set_title("Residual (Planet Subtracted)")
 
     # (5) residual vs time, first 90 days (moon signal present)
     a = ax[1, 1]
@@ -264,7 +264,7 @@ def plot_trial(diag, filename=None, figsize=(14, 11), dpi=140):
     a.plot(td[z90], srres[z90] * MAS, "-", color=_C_TRUE, lw=0.8)
     a.axhline(0, color="0.6", lw=0.5, ls="--")
     a.set_xlabel("Time (days)"); a.set_ylabel("Residual (mas)")
-    a.set_title("Residual (first 90 d)"); a.legend(fontsize=6, loc="upper right")
+    a.set_title("Residual (First 90 d)"); a.legend(fontsize=6, loc="upper right")
     _ylim90 = a.get_ylim()
 
     # (6) residual vs time, first 90 days AFTER subtracting the recovered sine
@@ -278,7 +278,7 @@ def plot_trial(diag, filename=None, figsize=(14, 11), dpi=140):
     a.axhline(0, color="0.6", lw=0.5, ls="--")
     a.set_ylim(_ylim90)
     a.set_xlabel("Time (days)"); a.set_ylabel("Residual (mas)")
-    a.set_title("Residual (first 90 d, primary removed)")
+    a.set_title("Residual (First 90 d, Primary Removed)")
 
     # ===== rows 2+: iterative recovery, one row per prewhitening round =====
     for ri, rc in enumerate(rec_list):
@@ -288,7 +288,7 @@ def plot_trial(diag, filename=None, figsize=(14, 11), dpi=140):
         for ts in true_synods:                       # true signals, for reference
             pa.axvline(ts, color=_C_TRUE, ls="--", lw=0.6, alpha=0.5)
         pa.set_xscale("log")
-        pa.set_xlabel("Trial synodic period (days)")
+        pa.set_xlabel("Trial Synodic Period (days)")
         pa.set_ylabel(r"$\chi^2_{\rm flat}-\chi^2_{\rm sine}$")
 
         if rc["recovered"]:
@@ -300,19 +300,19 @@ def plot_trial(diag, filename=None, figsize=(14, 11), dpi=140):
             M2 = np.asarray(rc["fold_model"])
             fx = ax[2 + ri, 1]
             fx.errorbar(ph2, A2 * MAS, yerr=E2 * MAS, fmt="o", ms=3, color=_C_OBS,
-                        alpha=0.7, lw=0.6, label="binned")
-            fx.plot(ph2[o2], M2[o2] * MAS, "-", color=_C_FIT, lw=1.5, label="sine fit")
+                        alpha=0.7, lw=0.6, label="Binned")
+            fx.plot(ph2[o2], M2[o2] * MAS, "-", color=_C_FIT, lw=1.5, label="Sine Fit")
             fx.axhline(0, color="0.6", lw=0.5, ls="--")
-            fx.set_xlabel("Phase-folded day"); fx.set_ylabel("Amplitude (mas)")
-            fx.set_title("Phase-folded at %.2f d" % rc["best_period"]); fx.legend(fontsize=6)
+            fx.set_xlabel("Phase-Folded Day"); fx.set_ylabel("Amplitude (mas)")
+            fx.set_title("Phase-Folded at %.2f d" % rc["best_period"]); fx.legend(fontsize=6)
             mx = ax[2 + ri, 2]
             mx.errorbar(ph2, (A2 - M2) * MAS, yerr=E2 * MAS, fmt="o", ms=3, color=_C_OBS,
                         alpha=0.7, lw=0.6)
             mx.axhline(0, color="0.6", lw=0.5, ls="--")
-            mx.set_xlabel("Phase-folded day"); mx.set_ylabel("Residual (mas)")
-            mx.set_title("Phase-fold minus sine")
+            mx.set_xlabel("Phase-Folded Day"); mx.set_ylabel("Residual (mas)")
+            mx.set_title("Phase-Fold Minus Sine")
         else:
-            pa.set_title(r"No further signal ($\chi^2$ < %.0f)" % thr)
+            pa.set_title(r"No Further Signal ($\chi^2$ < %.0f)" % thr)
             # ---- summary A: recovered system in (a, mass), with mass uncertainties ----
             sa = ax[2 + ri, 1]
             inp = diag.get("input_moons", [])
@@ -341,14 +341,14 @@ def plot_trial(diag, filename=None, figsize=(14, 11), dpi=140):
                 sa.set_yticks(yt); sa.set_yticklabels(["%g" % c for c in yt])
                 sa.xaxis.set_minor_formatter(ticker.NullFormatter())
                 sa.yaxis.set_minor_formatter(ticker.NullFormatter())
-            sa.set_xlabel("Moon semimajor axis (R$_{\\rm Jup}$)")
-            sa.set_ylabel("Moon mass (M$_\\oplus$)")
-            sa.set_title("Recovered system (i labeled)")
+            sa.set_xlabel("Moon Semimajor Axis (R$_{\\rm Jup}$)")
+            sa.set_ylabel("Moon Mass (M$_\\oplus$)")
+            sa.set_title("Recovered System ($i$ Labeled)")
             sa.legend(handles=[
                 Line2D([0], [0], marker="o", ls="none", markerfacecolor="none",
-                       markeredgecolor=_C_TRUE, markersize=8, label="input"),
+                       markeredgecolor=_C_TRUE, markersize=8, label="Input"),
                 Line2D([0], [0], marker="o", ls="none", color=_C_FIT, markersize=6,
-                       label="recovered ±stat")],
+                       label="Recovered ±Stat")],
                 fontsize=6, loc="best")
             # ---- summary B: 90-day residual, FULL recovered system removed ----
             sb = ax[2 + ri, 2]
@@ -362,12 +362,12 @@ def plot_trial(diag, filename=None, figsize=(14, 11), dpi=140):
             sb.axhline(0, color="0.6", lw=0.5, ls="--")
             sb.set_ylim(_ylim90)
             sb.set_xlabel("Time (days)"); sb.set_ylabel("Residual (mas)")
-            sb.set_title("Residual (first 90 d, all recovered removed)")
+            sb.set_title("Residual (First 90 d, All Recovered Removed)")
             sb.legend(fontsize=6, loc="upper right")
 
     fig.suptitle(
-        "single trial   |   %d moon(s) in, %d recovered   |   %.0f µas/epoch   |   "
-        "primary %.2f d (rec %.2f d, %.2f%%),  amp %.1f/%.1f µas"
+        "Single Trial   |   %d Moon(s) In, %d Recovered   |   %.0f µas/Epoch   |   "
+        "Primary %.2f d (Rec %.2f d, %.2f%%),  Amp %.1f/%.1f µas"
         % (len(diag.get("input_moons", [])),
            sum(1 for x in rec_list if x["recovered"]),
            diag.get("precision_uas", float("nan")),
