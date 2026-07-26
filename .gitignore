@@ -16,3 +16,4 @@ venv/
 *.npz
 *.png
 !example_figure.png
+*.pkl
