@@ -23,7 +23,7 @@ copy them into the manuscript's `figs/` directory to rebuild the PDF.
 | script | produces | inputs | runtime |
 |---|---|---|---|
 | `make_recovery_fig.py` | `figs/recovery_summary.png` (Fig. 1) **and** the Table 3 rows + Sec. 4.2 residual-RMS numbers | `exomoonsim`, `seed=11` | ~30 s |
-| `make_two_moon_fig.py` | `figs/two_moon_recovery.png` (Fig. 2) **and** the Table 2 rows | `exomoonsim`, `seed=42` | ~30 s |
+| `make_two_moon_figs.py` | `figs/two_moon_{context,residuals,periodograms,phasefold}.png` (Figs. 2-5) **and** the Table 2 rows | `exomoonsim`, `seed=42` | ~30 s |
 | `make_false_positive_fig.py` | `figs/false_positive.png` (Fig. 3) | `data/survey_50muas_ntrials50.npz` | ~2 s |
 | `make_fp_vs_threshold.py` | `figs/fp_vs_threshold.png` (Fig. 4) + threshold-sweep table | `data/survey_50muas_ntrials50.npz` | ~2 s |
 | `make_validation_fig.py` | `figs/idl_vs_python.png` (Appendix) + agreement stats | `data/idl_cubes_dump.txt`, `data/survey_50muas_ntrials50.npz` | ~3 s |

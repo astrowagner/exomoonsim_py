@@ -12,7 +12,7 @@ a specific version, check out the corresponding commit/tag of this repository.
 
 Fixed inputs (do not change if you want bit-for-bit reproduction):
   make_recovery_fig.py     seed=11, single 1 Mearth moon, 10 uas, 5 yr, circular
-  make_two_moon_fig.py     seed=42, two moons (0.3/0.2 Mearth at 20/12 Rjup), 10 uas, 5 yr
+  make_two_moon_figs.py    seed=42, two moons (0.3/0.2 Mearth at 20/12 Rjup), 10 uas, 5 yr
   ../run_50muas.py         SurveyConfig default base_seed, 50 uas, 9x101 grid, 50 trials
   data/survey_50muas_ntrials50.npz   exact output of ../run_50muas.py
   data/idl_cubes_dump.txt  original IDL cubes (validation/dump_cubes.pro), matched grid
