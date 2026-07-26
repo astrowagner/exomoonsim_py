@@ -7,7 +7,8 @@ candidate at 10 uas over 5 yr, with all four moons on offset orbital phases:
   0.30 Mearth @ 20 Rjup,  0.20 @ 12,  0.15 @ 30,  0.25 @ 8  (R_Jup),  all i=50 deg.
 
 Produces:
-  four_moon_phasefold.png  the phase-folded detection of each of the four moons
+  four_moon_phasefold.png  each moon's phase-fold (top row) and phase-fold residual
+                           (bottom row), one column per moon
   four_moon_summary.png    dual panel: the initial (round-1) periodogram and the
                            recovered system in the mass-semimajor-axis plane
 
@@ -49,22 +50,25 @@ for mn, fr in zip(p.moons, (0.15, 0.55, 0.80, 0.35)):   # offset all orbital pha
 d = run_trial(p, seed=SEED, return_diagnostics=True)["diag"]
 done = [r for r in d["recoveries"] if r["recovered"]]
 
-# --------------- Figure A: four phase-folded detections (2x2) -------------- #
+# --------------- Figure A: four phase-folds (top) + residuals (bottom) ----- #
 order = sorted(range(len(done)), key=lambda k: done[k]["best_period"])
-fig, ax = plt.subplots(2, 2, figsize=(9.6, 6.4))
-for axi, k in zip(ax.ravel(), order):
+fig, ax = plt.subplots(2, 4, figsize=(14.0, 6.0))
+for col, k in enumerate(order):
     r = done[k]
     ph, am = r["fold_phase"], r["fold_amp"] * UAS
     er, mo = r["fold_err"] * UAS, r["fold_model"] * UAS
     o = np.argsort(ph)
-    axi.errorbar(ph[o], am[o], yerr=er[o], fmt="o", ms=2.3, color=C_OBS,
-                 alpha=0.7, lw=0.5, label="Binned")
-    axi.plot(ph[o], mo[o], "-", color=C_FIT, lw=1.4, label="Sine Fit")
-    axi.set_ylabel(r"Amplitude ($\mu$as)")
-    axi.set_title(r"$a=%.0f\,R_{\rm Jup}$,  $P_{\rm syn}=%.2f$ d" % (r["a_rjup"], r["best_period"]),
-                  fontsize=9)
-for axi in ax[1, :]:
-    axi.set_xlabel("Phase-Folded Day")
+    at, ab = ax[0, col], ax[1, col]
+    at.errorbar(ph[o], am[o], yerr=er[o], fmt="o", ms=2.2, color=C_OBS,
+                alpha=0.7, lw=0.5, label="Binned")
+    at.plot(ph[o], mo[o], "-", color=C_FIT, lw=1.4, label="Sine Fit")
+    at.set_title(r"$a=%.0f\,R_{\rm Jup}$,  $P_{\rm syn}=%.2f$ d" % (r["a_rjup"], r["best_period"]),
+                 fontsize=9)
+    ab.axhline(0, color="0.6", ls=":", lw=0.8)
+    ab.errorbar(ph[o], am[o] - mo[o], yerr=er[o], fmt="o", ms=2.2, color=C_OBS, alpha=0.7, lw=0.5)
+    ab.set_xlabel("Phase-Folded Day")
+ax[0, 0].set_ylabel(r"Amplitude ($\mu$as)")
+ax[1, 0].set_ylabel(r"Residual ($\mu$as)")
 ax[0, 0].legend(fontsize=7, loc="best")
 fig.tight_layout(); fig.savefig(os.path.join(FIGDIR, "four_moon_phasefold.png"),
                                 dpi=200, bbox_inches="tight")

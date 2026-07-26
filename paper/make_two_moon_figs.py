@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
-"""Figures 2-5 (Paper III): the blind two-moon recovery, split by plot type.
+"""Figures 2-4 (Paper III): the blind two-moon recovery, split by plot type.
 
 Runs one fiducial two-moon trial (0.3 Mearth at 20 Rjup, 0.2 Mearth at 12 Rjup,
 both i=50 deg) around the alpha Cen A giant-planet candidate at 10 uas over 5 yr,
-then draws four focused figures from the diagnostics dict:
+then draws three focused figures from the diagnostics dict:
 
   two_moon_context.png       on-sky track + observed separation
   two_moon_residuals.png     90-day separation residual, cleaned round by round
   two_moon_periodograms.png  the prewhitening period search (2 rounds + null)
-  two_moon_phasefold.png     the phase-folded detection of each moon (fold + residual)
 
-Also prints the recovered parameters quoted in Table 2. Reproducible: fixed seed,
+(The phase-folded detections are shown for the richer four-moon system in
+make_four_moon_figs.py.) Also prints the recovered parameters of Table 2.
+Reproducible: fixed seed,
 imports the repo's exomoonsim package. Run:  python make_two_moon_figs.py
 """
 import os
@@ -112,32 +113,9 @@ fig.tight_layout(); fig.savefig(os.path.join(FIGDIR, "two_moon_periodograms.png"
                                 dpi=200, bbox_inches="tight")
 plt.close(fig)
 
-# ---------------- Figure 5: phase-folded detections ------------------------ #
-fig, ax = plt.subplots(2, 2, figsize=(9.5, 6.0))
-for row, r in enumerate(done[:2]):
-    ph, am, er, mo = r["fold_phase"], r["fold_amp"] * UAS, r["fold_err"] * UAS, r["fold_model"] * UAS
-    o = np.argsort(ph)
-    fa = ax[row, 0]
-    fa.errorbar(ph[o], am[o], yerr=er[o], fmt="o", ms=2.5, color=C_OBS,
-                alpha=0.7, lw=0.6, label="Binned")
-    fa.plot(ph[o], mo[o], "-", color=C_FIT, lw=1.5, label="Sine Fit")
-    fa.set_ylabel(r"Amplitude ($\mu$as)")
-    fa.set_title(r"Moon %d: Phase-Folded at %.2f d" % (row + 1, r["best_period"]), fontsize=9)
-    fa.legend(fontsize=7)
-    fb = ax[row, 1]
-    fb.axhline(0, color="0.6", ls=":", lw=0.8)
-    fb.errorbar(ph[o], am[o] - mo[o], yerr=er[o], fmt="o", ms=2.5, color=C_OBS, alpha=0.7, lw=0.6)
-    fb.set_ylabel(r"Residual ($\mu$as)")
-    fb.set_title("Moon %d: Phase-Fold Minus Sine" % (row + 1), fontsize=9)
-for a in ax[1, :]:
-    a.set_xlabel("Phase-Folded Day")
-fig.tight_layout(); fig.savefig(os.path.join(FIGDIR, "two_moon_phasefold.png"),
-                                dpi=200, bbox_inches="tight")
-plt.close(fig)
-
 # ---------------- Table 2 numbers ------------------------------------------ #
 print("Table 2 (blind two-moon recovery, primary first):")
 print("  moon   a_rec(Rjup)   m_rec(Mearth)   i_rec(deg)")
 for k, r in enumerate(done, 1):
     print(f"  {k}       {r['a_rjup']:6.1f}        {r['mass']:7.3f}        {r['inclination']:5.1f}")
-print("wrote 4 figures to", FIGDIR)
+print("wrote 3 figures to", FIGDIR)
