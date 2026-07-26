@@ -9,7 +9,6 @@ then draws four focused figures from the diagnostics dict:
   two_moon_residuals.png     90-day separation residual, cleaned round by round
   two_moon_periodograms.png  the prewhitening period search (2 rounds + null)
   two_moon_phasefold.png     the phase-folded detection of each moon (fold + residual)
-  two_moon_system.png        the recovered moons in the mass-semimajor-axis plane
 
 Also prints the recovered parameters quoted in Table 2. Reproducible: fixed seed,
 imports the repo's exomoonsim package. Run:  python make_two_moon_figs.py
@@ -20,8 +19,6 @@ import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
-from matplotlib.lines import Line2D
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, os.pardir))       # repo root -> exomoonsim package
@@ -138,43 +135,9 @@ fig.tight_layout(); fig.savefig(os.path.join(FIGDIR, "two_moon_phasefold.png"),
                                 dpi=200, bbox_inches="tight")
 plt.close(fig)
 
-# ---------------- Figure 6: recovered system (mass-semimajor-axis plane) --- #
-fig, a = plt.subplots(figsize=(5.4, 4.4))
-inp = list(d["input_moons"])
-if inp:
-    ia, im = zip(*inp)
-    a.scatter(ia, im, s=95, facecolors="none", edgecolors=C_TRUE, lw=1.6, zorder=5)
-for r in done:
-    aa, mm = r["a_rjup"], r["mass"]
-    a.errorbar(aa, mm, yerr=r.get("mass_err", 0.0), fmt="o", ms=6, color=C_FIT,
-               ecolor=C_FIT, capsize=3, lw=1.2, zorder=4)
-    a.annotate(r"$i=%.0f^\circ$" % r["inclination"], (aa, mm), textcoords="offset points",
-               xytext=(8, 4), fontsize=8, color=C_FIT)
-a.set_xscale("log"); a.set_yscale("log")
-allx = [v[0] for v in inp] + [r["a_rjup"] for r in done]
-ally = [v[1] for v in inp] + [r["mass"] for r in done]
-xt = [c for c in (5, 7, 10, 15, 20, 30) if min(allx) * 0.7 <= c <= max(allx) * 1.4]
-yt = [c for c in (0.1, 0.15, 0.2, 0.3, 0.5) if min(ally) * 0.6 <= c <= max(ally) * 1.6]
-a.set_xticks(xt); a.set_xticklabels(["%g" % c for c in xt])
-a.set_yticks(yt); a.set_yticklabels(["%g" % c for c in yt])
-a.xaxis.set_minor_formatter(ticker.NullFormatter())
-a.yaxis.set_minor_formatter(ticker.NullFormatter())
-a.set_xlim(min(allx) * 0.8, max(allx) * 1.30)          # room for the i-labels
-a.set_ylim(min(ally) * 0.7, max(ally) * 1.30)
-a.set_xlabel(r"Moon Semimajor Axis ($R_{\rm Jup}$)")
-a.set_ylabel(r"Moon Mass ($M_\oplus$)")
-a.legend(handles=[
-    Line2D([0], [0], marker="o", ls="none", markerfacecolor="none",
-           markeredgecolor=C_TRUE, markersize=8, label="Input"),
-    Line2D([0], [0], marker="o", ls="none", color=C_FIT, markersize=6,
-           label="Recovered ($\\pm$Stat)")], fontsize=8, loc="best")
-fig.tight_layout(); fig.savefig(os.path.join(FIGDIR, "two_moon_system.png"),
-                                dpi=200, bbox_inches="tight")
-plt.close(fig)
-
 # ---------------- Table 2 numbers ------------------------------------------ #
 print("Table 2 (blind two-moon recovery, primary first):")
 print("  moon   a_rec(Rjup)   m_rec(Mearth)   i_rec(deg)")
 for k, r in enumerate(done, 1):
     print(f"  {k}       {r['a_rjup']:6.1f}        {r['mass']:7.3f}        {r['inclination']:5.1f}")
-print("wrote 5 figures to", FIGDIR)
+print("wrote 4 figures to", FIGDIR)

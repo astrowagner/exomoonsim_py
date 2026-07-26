@@ -24,6 +24,8 @@ copy them into the manuscript's `figs/` directory to rebuild the PDF.
 |---|---|---|---|
 | `make_recovery_fig.py` | `figs/recovery_summary.png` (Fig. 1) **and** the Table 3 rows + Sec. 4.2 residual-RMS numbers | `exomoonsim`, `seed=11` | ~30 s |
 | `make_two_moon_figs.py` | `figs/two_moon_{context,residuals,periodograms,phasefold}.png` (Figs. 2-5) **and** the Table 2 rows | `exomoonsim`, `seed=42` | ~30 s |
+| `make_four_moon_figs.py` | `figs/four_moon_{summary,phasefold}.png` (Figs. 6-7) **and** the Table 3 rows | `exomoonsim`, `seed=7` | ~20 s |
+| `make_confusion_fig.py` | `figs/confusion_vs_n.png` (Fig. 10, multiple-moon robustness) | `exomoonsim`, `seed=7` | ~1-2 min |
 | `make_false_positive_fig.py` | `figs/false_positive.png` (Fig. 3) | `data/survey_50muas_ntrials50.npz` | ~2 s |
 | `make_fp_vs_threshold.py` | `figs/fp_vs_threshold.png` (Fig. 4) + threshold-sweep table | `data/survey_50muas_ntrials50.npz` | ~2 s |
 | `make_validation_fig.py` | `figs/idl_vs_python.png` (Appendix) + agreement stats | `data/idl_cubes_dump.txt`, `data/survey_50muas_ntrials50.npz` | ~3 s |
