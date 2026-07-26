@@ -52,7 +52,7 @@ done = [r for r in d["recoveries"] if r["recovered"]]
 
 # --------------- Figure A: four phase-folds (top) + residuals (bottom) ----- #
 order = sorted(range(len(done)), key=lambda k: done[k]["best_period"])
-fig, ax = plt.subplots(2, 4, figsize=(14.0, 6.0))
+fig, ax = plt.subplots(2, 4, figsize=(14.0, 3.9))
 for col, k in enumerate(order):
     r = done[k]
     ph, am = r["fold_phase"], r["fold_amp"] * UAS
