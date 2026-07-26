@@ -46,16 +46,31 @@ MOONS = [(20, 0.30 / 3), (12, 0.20 / 3), (30, 0.15 / 3), (8, 0.25 / 3)]  # a (Rj
 FRACS = (0.15, 0.55, 0.80, 0.35)
 
 
-def run(prec):
+def run(prec, thr=5.0):
     moons = [Moon(a=a, mass=m, inc=50, ecc=0.05) for a, m in MOONS]
     p = SimParams(astrometric_precision=prec, texp=1.0, pend=60.0, ptestwidth=0.0015, moons=moons)
     for mn, fr in zip(p.moons, FRACS):
         mn.t0 = fr * p._period_days(mn) / 365.25
-    return run_trial(p, seed=SEED, return_diagnostics=True)["diag"]
+    return run_trial(p, seed=SEED, return_diagnostics=True, recover_thr=thr)["diag"]
 
 
-d20 = run(2e-5)
-d50 = run(5e-5)
+def is_real(d, r):   # a recovered signal is real if its period matches a true synodic
+    tsyns = [d["true_synodic"]] + list(d["companion_synodics"])
+    return any(abs(r["best_period"] / ts - 1) < 0.05 for ts in tsyns)
+
+
+import pickle
+CACHE = os.path.join(HERE, "data", "_fourmoon_cache.pkl")   # speeds re-runs; delete to recompute
+_cache = pickle.load(open(CACHE, "rb")) if os.path.exists(CACHE) else {}
+def cached(key, prec, thr=5.0):
+    if key not in _cache:
+        _cache[key] = run(prec, thr)
+        os.makedirs(os.path.dirname(CACHE), exist_ok=True)
+        pickle.dump(_cache, open(CACHE, "wb"))
+    return _cache[key]
+d20 = cached("20", 2e-5)
+d50 = cached("50", 5e-5)
+d50_t3 = cached("50t3", 5e-5, 3.0)   # 50 uas with a relaxed Delta chi^2 > 3 cut
 
 
 def periodogram_panel(a, d, first=True):
@@ -67,44 +82,63 @@ def periodogram_panel(a, d, first=True):
     a.set_ylabel(r"$\chi^2_{\rm flat}-\chi^2_{\rm sine}$")
 
 
-def system_panel(a, d, legend=False):
+def system_panel(a, d, legend=False, mark_spurious=False):
     inp = list(d["input_moons"]); done = [x for x in d["recoveries"] if x["recovered"]]
     ia, im = zip(*inp)
     a.scatter(ia, im, s=95, facecolors="none", edgecolors=C_TRUE, lw=1.6, zorder=5)
+    nreal = nsp = 0
     for r in done:
-        a.errorbar(r["a_rjup"], r["mass"], yerr=r.get("mass_err", 0.0), fmt="o", ms=6,
-                   color=C_FIT, ecolor=C_FIT, capsize=3, lw=1.2, zorder=4)
-        a.annotate(r"$i=%.0f^\circ$" % r["inclination"], (r["a_rjup"], r["mass"]),
-                   textcoords="offset points", xytext=(7, 4), fontsize=7.5, color=C_FIT)
+        if mark_spurious and not is_real(d, r):
+            nsp += 1
+            a.plot(r["a_rjup"], r["mass"], "x", color="crimson", ms=9, mew=2, zorder=6)
+        else:
+            nreal += 1
+            a.errorbar(r["a_rjup"], r["mass"], yerr=r.get("mass_err", 0.0), fmt="o", ms=6,
+                       color=C_FIT, ecolor=C_FIT, capsize=3, lw=1.2, zorder=4)
+            a.annotate(r"$i=%.0f^\circ$" % r["inclination"], (r["a_rjup"], r["mass"]),
+                       textcoords="offset points", xytext=(7, 4), fontsize=7.5, color=C_FIT)
     a.set_xscale("log"); a.set_yscale("log")
-    allx = [v[0] for v in inp]; ally = [v[1] for v in inp]
-    xt = [c for c in (5, 8, 10, 15, 20, 30) if min(allx) * 0.7 <= c <= max(allx) * 1.4]
-    yt = [c for c in (0.04, 0.05, 0.07, 0.1, 0.15) if min(ally) * 0.6 <= c <= max(ally) * 1.6]
+    allx = [v[0] for v in inp] + [r["a_rjup"] for r in done]
+    ally = [v[1] for v in inp] + [r["mass"] for r in done]
+    xt = [c for c in (4, 5, 8, 10, 15, 20, 30) if min(allx) * 0.7 <= c <= max(allx) * 1.4]
+    yt = [c for c in (0.04, 0.05, 0.07, 0.1, 0.15, 0.2) if min(ally) * 0.6 <= c <= max(ally) * 1.6]
     a.set_xticks(xt); a.set_xticklabels(["%g" % c for c in xt])
     a.set_yticks(yt); a.set_yticklabels(["%g" % c for c in yt])
     a.xaxis.set_minor_formatter(ticker.NullFormatter())
     a.yaxis.set_minor_formatter(ticker.NullFormatter())
-    a.set_xlim(min(allx) * 0.8, max(allx) * 1.32); a.set_ylim(min(ally) * 0.65, max(ally) * 1.4)
+    a.set_xlim(min(allx) * 0.72, max(allx) * 1.32); a.set_ylim(min(ally) * 0.6, max(ally) * 1.5)
     a.set_ylabel(r"Moon Mass ($M_\oplus$)")
-    if legend:
-        a.legend(handles=[
-            Line2D([0], [0], marker="o", ls="none", markerfacecolor="none",
-                   markeredgecolor=C_TRUE, markersize=8, label="Input"),
-            Line2D([0], [0], marker="o", ls="none", color=C_FIT, markersize=6,
-                   label="Recovered")], fontsize=8, loc="lower left")
-    return len(done)
+    handles = [Line2D([0], [0], marker="o", ls="none", markerfacecolor="none",
+                      markeredgecolor=C_TRUE, markersize=8, label="Input"),
+               Line2D([0], [0], marker="o", ls="none", color=C_FIT, markersize=6, label="Recovered")]
+    if mark_spurious:
+        handles.append(Line2D([0], [0], marker="x", ls="none", color="crimson",
+                              markersize=8, mew=2, label="False Positive"))
+    if legend or mark_spurious:
+        a.legend(handles=handles, fontsize=7.5, loc="lower left")
+    return nreal, nsp
 
 
-# ---------------- Figure A: 2x2 precision comparison ----------------------- #
-fig, ax = plt.subplots(2, 2, figsize=(11.2, 7.4))
-for row, (d, lab) in enumerate([(d20, "20"), (d50, "50")]):
-    periodogram_panel(ax[row, 0], d)
-    n = system_panel(ax[row, 1], d, legend=(row == 0))
-    ntot = len(d["input_moons"])
-    ax[row, 0].set_title(r"(%s) $%s\,\mu$as: Initial Periodogram" % ("ac"[row], lab), fontsize=10)
-    ax[row, 1].set_title(r"(%s) $%s\,\mu$as: Recovered (%d/%d)" % ("bd"[row], lab, n, ntot), fontsize=10)
+# ---------------- Figure A: 3x2 precision + threshold comparison ----------- #
+L = "abcdef"
+fig, ax = plt.subplots(3, 2, figsize=(11.2, 10.2))
+for row, (d, lab, mark) in enumerate([(d20, "20", False), (d50, "50", False), (d50_t3, "50", True)]):
+    periodogram_panel(ax[row, 0], d)                     # threshold line drawn at d["recover_thr"]
+    nreal, nsp = system_panel(ax[row, 1], d, legend=(row == 0), mark_spurious=mark)
+    ntot = len(d["input_moons"]); thr = int(round(d["recover_thr"]))
+    ax[row, 0].set_title(r"(%s) $%s\,\mu$as, $\Delta\chi^2>%d$: Initial Periodogram"
+                         % (L[2 * row], lab, thr), fontsize=9.5)
+    if mark:
+        ax[row, 1].set_title(r"(%s) $%s\,\mu$as, $\Delta\chi^2>%d$: %d/%d moons $+$ %d false positive%s"
+                             % (L[2 * row + 1], lab, thr, nreal, ntot, nsp, "" if nsp == 1 else "s"),
+                             fontsize=9.5)
+        for x in [x for x in d["recoveries"] if x["recovered"] and not is_real(d, x)]:
+            ax[row, 0].axvline(x["best_period"], color="crimson", lw=1.0, alpha=0.9)
+    else:
+        ax[row, 1].set_title(r"(%s) $%s\,\mu$as, $\Delta\chi^2>%d$: Recovered (%d/%d)"
+                             % (L[2 * row + 1], lab, thr, nreal, ntot), fontsize=9.5)
 for c in (0, 1):
-    ax[1, c].set_xlabel(["Trial Synodic Period (days)", r"Moon Semimajor Axis ($R_{\rm Jup}$)"][c])
+    ax[2, c].set_xlabel(["Trial Synodic Period (days)", r"Moon Semimajor Axis ($R_{\rm Jup}$)"][c])
 fig.tight_layout(); fig.savefig(os.path.join(FIGDIR, "four_moon_summary.png"),
                                 dpi=200, bbox_inches="tight")
 plt.close(fig)
