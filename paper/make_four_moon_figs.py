@@ -51,7 +51,7 @@ d = run_trial(p, seed=SEED, return_diagnostics=True)["diag"]
 done = [r for r in d["recoveries"] if r["recovered"]]
 
 # --------------- Figure A: four phase-folds (top) + residuals (bottom) ----- #
-order = sorted(range(len(done)), key=lambda k: done[k]["best_period"])
+order = sorted(range(len(done)), key=lambda k: -done[k]["sig"])   # by detection significance
 fig, ax = plt.subplots(2, 4, figsize=(14.0, 3.9))
 for col, k in enumerate(order):
     r = done[k]
@@ -62,8 +62,8 @@ for col, k in enumerate(order):
     at.errorbar(ph[o], am[o], yerr=er[o], fmt="o", ms=2.2, color=C_OBS,
                 alpha=0.7, lw=0.5, label="Binned")
     at.plot(ph[o], mo[o], "-", color=C_FIT, lw=1.4, label="Sine Fit")
-    at.set_title(r"$a=%.0f\,R_{\rm Jup}$,  $P_{\rm syn}=%.2f$ d" % (r["a_rjup"], r["best_period"]),
-                 fontsize=9)
+    at.set_title(r"$a=%.0f\,R_{\rm Jup}$,  $P_{\rm syn}=%.1f$ d,  $\Delta\chi^2=%.0f$"
+                 % (r["a_rjup"], r["best_period"], r["sig"]), fontsize=8.5)
     ab.axhline(0, color="0.6", ls=":", lw=0.8)
     ab.errorbar(ph[o], am[o] - mo[o], yerr=er[o], fmt="o", ms=2.2, color=C_OBS, alpha=0.7, lw=0.5)
     ab.set_xlabel("Phase-Folded Day")
