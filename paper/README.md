@@ -22,15 +22,15 @@ copy them into the manuscript's `figs/` directory to rebuild the PDF.
 
 | script | produces | inputs | runtime |
 |---|---|---|---|
-| `make_recovery_fig.py` | `figs/recovery_summary.png` (Fig. 1) **and** the Table 3 rows + Sec. 4.2 residual-RMS numbers | `exomoonsim`, `seed=11` | ~30 s |
-| `make_two_moon_figs.py` | `figs/two_moon_{context,residuals,periodograms}.png` (Figs. 2-4) **and** the Table 2 rows | `exomoonsim`, `seed=42` | ~30 s |
-| `make_four_moon_figs.py` | `figs/four_moon_{summary,phasefold}.png` (Figs. 5-6) **and** the Table 3 rows | `exomoonsim`, `seed=7` | ~20 s |
-| `make_confusion_fig.py` | `figs/confusion_vs_n.png` (Fig. 9, multiple-moon robustness) | `exomoonsim`, `seed=7` | ~1-2 min |
-| `make_false_positive_fig.py` | `figs/false_positive.png` (Fig. 3) | `data/survey_50muas_ntrials50.npz` | ~2 s |
-| `make_fp_vs_threshold.py` | `figs/fp_vs_threshold.png` (Fig. 4) + threshold-sweep table | `data/survey_50muas_ntrials50.npz` | ~2 s |
+| `make_recovery_fig.py` | `figs/recovery_summary.png` (Fig. 1) **and** the Table 4 rows + Sec. 4.3 residual-RMS numbers | `exomoonsim`, `seed=11` | ~30 s |
+| `make_two_moon_figs.py` | `figs/two_moon_{residuals,periodograms}.png` (Figs. 2-3) **and** the Table 2 rows | `exomoonsim`, `seed=42` | ~30 s |
+| `make_four_moon_figs.py` | `figs/four_moon_{summary,phasefold}.png` (Figs. 4-5) **and** the Table 3 rows | `exomoonsim`, `seed=7` | ~20 s |
+| `make_confusion_fig.py` | `figs/confusion_vs_n.png` (Fig. 8, multiple-moon robustness) | `exomoonsim`, `seed=7` | ~1-2 min |
+| `make_false_positive_fig.py` | `figs/false_positive.png` (Fig. 6) | `data/survey_50muas_ntrials50.npz` | ~2 s |
+| `make_fp_vs_threshold.py` | `figs/fp_vs_threshold.png` (Fig. 7) + threshold-sweep table | `data/survey_50muas_ntrials50.npz` | ~2 s |
 | `make_validation_fig.py` | `figs/idl_vs_python.png` (Appendix) + agreement stats | `data/idl_cubes_dump.txt`, `data/survey_50muas_ntrials50.npz` | ~3 s |
 
-`make_recovery_fig.py` and `make_two_moon_fig.py` run the simulation directly (fixed
+`make_recovery_fig.py`, `make_two_moon_figs.py`, and `make_four_moon_figs.py` run the simulation directly (fixed
 seeds). The three survey-based scripts read only committed data, so they reproduce the
 exact published figures.
 

@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-"""Figures 2-4 (Paper III): the blind two-moon recovery, split by plot type.
+"""Figures 2-3 (Paper III): the blind two-moon recovery, split by plot type.
 
 Runs one fiducial two-moon trial (0.3 Mearth at 20 Rjup, 0.2 Mearth at 12 Rjup,
 both i=50 deg) around the alpha Cen A giant-planet candidate at 10 uas over 5 yr,
-then draws three focused figures from the diagnostics dict:
+then draws two focused figures from the diagnostics dict:
 
-  two_moon_context.png       on-sky track + observed separation
   two_moon_residuals.png     90-day separation residual, cleaned round by round
   two_moon_periodograms.png  the prewhitening period search (2 rounds + null)
 
@@ -45,29 +44,7 @@ recs = d["recoveries"]
 done = [r for r in recs if r["recovered"]]
 nullr = next((r for r in recs if not r["recovered"]), None)
 
-# ---------------- Figure 2: context (track + separation) ------------------- #
-fig, ax = plt.subplots(1, 2, figsize=(10.0, 4.0))
-a0 = ax[0]
-a0.plot(d["x_true"], d["y_true"], "-", color=C_TRUE, lw=0.8, label="True Path")
-a0.scatter(d["x_obs"], d["y_obs"], s=1.5, color=C_OBS, alpha=0.20, label="Observed")
-a0.plot(d["x_fit"], d["y_fit"], "-", color=C_FIT, lw=0.8, label="Best-Fit Orbit")
-a0.plot(d["x_com"], d["y_com"], ":", color="0.3", lw=0.8, label="Barycenter")
-a0.set_aspect("equal"); a0.set_xlabel("X (arcsec)"); a0.set_ylabel("Y (arcsec)")
-a0.set_title("(a) On-Sky Track", fontsize=10); a0.legend(fontsize=7, loc="best")
-a1 = ax[1]
-obs_r = np.hypot(d["x_obs"], d["y_obs"]) * MAS
-true_r = np.hypot(d["x_true"], d["y_true"]) * MAS
-fit_r = np.hypot(d["x_fit"], d["y_fit"]) * MAS
-a1.scatter(td, obs_r, s=1.5, color=C_OBS, alpha=0.20, label="Observed")
-a1.plot(td, true_r, "-", color=C_TRUE, lw=0.6, label="True")
-a1.plot(td, fit_r, "-", color=C_FIT, lw=0.6, label="Fit")
-a1.set_xlabel("Time (days)"); a1.set_ylabel("Separation (mas)")
-a1.set_title("(b) Observed Separation", fontsize=10); a1.legend(fontsize=7)
-fig.tight_layout(); fig.savefig(os.path.join(FIGDIR, "two_moon_context.png"),
-                                dpi=200, bbox_inches="tight")
-plt.close(fig)
-
-# ---------------- Figure 3: 90-day residual progression -------------------- #
+# ---------------- Figure 2: 90-day residual progression -------------------- #
 z = td <= 90.0
 band = sig1
 stages = [(td, d["rres"] * UAS, "(a) Planet Subtracted (Full Campaign)", False),
@@ -118,4 +95,4 @@ print("Table 2 (blind two-moon recovery, primary first):")
 print("  moon   a_rec(Rjup)   m_rec(Mearth)   i_rec(deg)")
 for k, r in enumerate(done, 1):
     print(f"  {k}       {r['a_rjup']:6.1f}        {r['mass']:7.3f}        {r['inclination']:5.1f}")
-print("wrote 3 figures to", FIGDIR)
+print("wrote 2 figures to", FIGDIR)
