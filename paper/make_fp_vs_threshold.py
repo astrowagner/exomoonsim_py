@@ -80,7 +80,7 @@ ax[0].semilogy(cuts, np.clip(noise_far, 1e-4, None), color=C2, lw=1.6,
 ax[0].semilogy(cuts, np.clip(fpg, 1e-4, None), color=C1, lw=1.6,
                label="Grid False-Positive Fraction")
 ax[0].axvline(c_fid, color="0.6", ls=":", lw=1.0)
-ax[0].text(c_fid * 1.05, 0.5, r"$\Delta\chi^2=5$", color="0.5", fontsize=8, rotation=90, va="top")
+ax[0].text(c_fid * 1.08, 0.8, r"$\Delta\chi^2=5$", color="0.5", fontsize=8, rotation=90, va="top")
 ax[0].set_xlabel(r"Detection Cut  $\Delta\chi^2 > c$")
 ax[0].set_ylabel("False-Positive Fraction")
 ax[0].set_ylim(3e-4, 1.0)

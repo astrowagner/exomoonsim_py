@@ -87,8 +87,8 @@ ax[0].axvline(best, color="0.6", ls="-", lw=0.8)
 for sb in (sb_lo, sb_hi):
     ax[0].axvline(sb, color=C_SIDE, ls="--", lw=0.9)
 ax[0].set_xlim(best * 0.6, best * 1.6)
-ax[0].annotate("Synodic", (best, sg.max()), xytext=(0, -3), textcoords="offset points",
-               ha="center", va="top", fontsize=8, color="0.35")
+ax[0].annotate("Synodic", (best, sg.max()), xytext=(-7, -1), textcoords="offset points",
+               ha="right", va="top", fontsize=8, color="0.35")
 ax[0].annotate(r"$\pm\,1/P_{\rm pl}$", (sb_hi, sg.max() * 0.5), xytext=(5, 0),
                textcoords="offset points", ha="left", fontsize=8, color=C_SIDE)
 ax[0].set_xlabel("Period (days)"); ax[0].set_ylabel(r"Significance  $\Delta\chi^2$")

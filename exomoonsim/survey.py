@@ -75,6 +75,7 @@ class SurveyConfig:
     nworkers: int = 0            # 0 -> os.cpu_count()
     base_seed: int = 12345
     companions: list = field(default_factory=list)   # fixed extra moons in every trial
+    stat: str = "sine"           # detection statistic: "sine" (default) or "ellipse" (matched filter)
 
 
 @dataclass
@@ -117,7 +118,7 @@ class SurveyResult:
 
 def _run_one(args):
     """Worker: run one trial for a given cell.  Top-level for pickling."""
-    base_dict, moon_a, moon_mass, seed, companions = args
+    base_dict, moon_a, moon_mass, seed, companions, stat = args
     p = SimParams(**base_dict)
     p.moon_a = float(moon_a)
     p.moon_mass = float(moon_mass)
@@ -126,7 +127,7 @@ def _run_one(args):
                      omega=p.moon_omega, bigomega=p.moon_bigomega, t0=p.moon_t0,
                      retrograde=p.retrograde)
         p.moons = list(companions) + [swept]
-    r = run_trial(p, seed=seed)
+    r = run_trial(p, seed=seed, stat=stat)
     return r["sig"], r["perr"], r["amperr"]
 
 
@@ -144,7 +145,7 @@ def run_survey(config: SurveyConfig = None, progress=True):
     for im, mass in enumerate(cfg.mass_grid):
         for ia, a in enumerate(cfg.a_grid):
             for it in range(cfg.ntrials):
-                work.append((base_dict, a, mass, cfg.base_seed + k, cfg.companions))
+                work.append((base_dict, a, mass, cfg.base_seed + k, cfg.companions, cfg.stat))
                 idx.append((ia, im, it))
                 k += 1
 

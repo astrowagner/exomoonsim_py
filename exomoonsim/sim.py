@@ -176,7 +176,7 @@ def _phasefold(phase, rres, rres2, binwidth, window, nbin):
 #  One trial
 # --------------------------------------------------------------------------- #
 def run_trial(params: SimParams = None, seed=None, return_diagnostics=False,
-              recover_thr=5.0, recover_blank=0.25):
+              recover_thr=5.0, recover_blank=0.25, stat="sine"):
     """Run a single simulation trial.
 
     Returns a dict with keys:
@@ -245,11 +245,19 @@ def run_trial(params: SimParams = None, seed=None, return_diagnostics=False,
 
     tdays = t * 365.25                          # phase-fold time axis (days)
 
+    # detection statistic: 'sine' (default, phase-folded single sinusoid) or 'ellipse'
+    # (projected-ellipse matched filter).  The ellipse statistic needs the known planet
+    # position angle phi(t), the fitted planet period, and the moon's sense of rotation.
+    phi = np.arctan2(pred_y, pred_x)
+    sign = -1.0 if moons[ip].retrograde else 1.0
+    ppl_days = 365.25 * fit.period
+
     # ---- period search over synodic period ----
     pps, sigs = [], []
     pp = p.pstart
     while pp < p.pend:
-        sig = _period_significance(tdays, rres, rres2, pp, p.binwidth, p.window)
+        sig = _search_significance(stat, tdays, rres, rres2, pp, phi, ppl_days, sign,
+                                   sig_pos, p.binwidth, p.window)
         pps.append(pp)
         sigs.append(sig)
         pp *= (1.0 + p.ptestwidth)
@@ -305,12 +313,12 @@ def run_trial(params: SimParams = None, seed=None, return_diagnostics=False,
             pp = p.pstart
             while pp < p.pend:
                 ppv.append(pp)
-                sgv.append(_period_significance(tdays, res, r2, pp, p.binwidth, p.window))
+                sgv.append(_search_significance(stat, tdays, res, r2, pp, phi, ppl_days,
+                                                sign, sig_pos, p.binwidth, p.window))
                 pp *= (1.0 + p.ptestwidth)
             return np.asarray(ppv), np.asarray(sgv)
 
-        phi = np.arctan2(pred_y, pred_x)              # known planet position angle vs time
-        recoveries = []
+        recoveries = []                               # phi/sign/ppl_days set before the search above
         res_pw = rres
         claimed = []
         cur = (pps, sigs)                       # round 1 reuses the main search on rres
@@ -425,6 +433,43 @@ def _amplitude_at(tdays, rres, rres2, pday, binwidth, window):
     if np.count_nonzero(good) < 5:
         return np.nan
     return sine_fit_fixed_period(tt[good], amp[good], pday, want_model=False).amp
+
+
+def _ellipse_significance(tdays, rres, phi, sid, sig_pos):
+    """Matched-filter detection statistic at sidereal period `sid`.
+
+    Fits the 4-coefficient projected-ellipse model (the moon's reflex at its sidereal
+    frequency, projected through the known planet position angle phi(t)) to the full
+    separation-residual series by ordinary least squares, and returns the chi^2 drop
+    (in units of the per-epoch precision).  Unlike the single-sinusoid statistic this
+    captures the planet-motion sidebands, so it recovers the full signal power.  NOTE
+    the scale differs from _period_significance (raw chi^2, not reduced), so the
+    detection threshold must be recalibrated when this statistic is used.
+    """
+    if not np.isfinite(sid) or sid <= 0.0:
+        return 0.0
+    w = 2.0 * np.pi / sid
+    ct, st = np.cos(w * tdays), np.sin(w * tdays)
+    cp, sp = np.cos(phi), np.sin(phi)
+    G = np.column_stack([ct * cp, ct * sp, st * cp, st * sp, np.ones(tdays.size)])
+    coef = np.linalg.lstsq(G, rres, rcond=None)[0]
+    resid = rres - G @ coef
+    inv = 1.0 / (sig_pos * sig_pos)
+    return float((np.sum((rres - rres.mean()) ** 2) - np.sum(resid ** 2)) * inv)
+
+
+def _search_significance(stat, tdays, rres, rres2, pp, phi, ppl_days, sign, sig_pos,
+                         binwidth, window):
+    """Dispatch the per-trial-period detection statistic.
+
+    stat='sine'    : phase-folded single-sinusoid fit (default; reduced chi^2, threshold 5).
+    stat='ellipse' : projected-ellipse matched filter over the full series (raw chi^2;
+                     recalibrate the threshold).
+    """
+    if stat == "ellipse":
+        sid = 1.0 / (1.0 / pp + sign / ppl_days)          # synodic -> sidereal
+        return _ellipse_significance(tdays, rres, phi, sid, sig_pos)
+    return _period_significance(tdays, rres, rres2, pp, binwidth, window)
 
 
 def _nan_result(moon_period, input_amp):
