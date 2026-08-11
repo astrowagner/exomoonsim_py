@@ -99,7 +99,8 @@ ax.text(NS[-1], THR * 1.06, (r"$\Delta\chi^2_{\rm mf}=%.0f$ cut" % THR) if _ELL 
 ax.set_xticks(NS)
 ax.set_xlabel("Number of Moons in the System")
 ax.set_ylabel(r"Null-Round Peak  $\Delta\chi^2$")
-ax.set_title("All $N$ Moons Recovered; No Out-of-Window False Positives", fontsize=9.5)
+ax.set_title(("No Out-of-Window False Positives Between Distinct Moons" if _ELL
+              else "All $N$ Moons Recovered; No Out-of-Window False Positives"), fontsize=9.5)
 ax.legend(frameon=False, fontsize=8, loc="center right")
 fig.tight_layout(); fig.savefig(OUT, dpi=200, bbox_inches="tight")
 print("wrote", OUT)
