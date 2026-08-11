@@ -28,10 +28,11 @@ sys.path.insert(0, os.path.join(HERE, os.pardir))
 from exomoonsim.sim import SimParams
 from exomoonsim.survey import input_amplitude_grid
 
-DATA = os.path.join(HERE, "data", "survey_50muas_ntrials50.npz")
+_ELL = "--ellipse" in sys.argv                 # matched-filter survey (calibrated cut in the npz)
+DATA = os.path.join(HERE, "data", "survey_50muas_ntrials50%s.npz" % ("_ellipse" if _ELL else ""))
 FIGDIR = os.path.join(HERE, "figs")
 os.makedirs(FIGDIR, exist_ok=True)
-OUT = os.path.join(FIGDIR, "false_positive.png")
+OUT = os.path.join(FIGDIR, "false_positive%s.png" % ("_ellipse" if _ELL else ""))
 
 d = np.load(DATA, allow_pickle=True)
 a, mass = d["a_grid"], d["mass_grid"]

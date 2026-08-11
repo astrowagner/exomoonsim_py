@@ -62,7 +62,7 @@ def median_sig(a, prec_arcsec, mass, cfg):
     """Median blind Delta chi^2 over cfg['ntrials'] noise realizations at (a, sigma, mass)."""
     return float(np.median([
         run_trial(SimParams(moon_a=a, moon_mass=mass, astrometric_precision=prec_arcsec,
-                            **cfg["search"]), seed=1000 + k)["sig"]
+                            **cfg["search"]), seed=1000 + k, stat=cfg.get("stat", "sine"))["sig"]
         for k in range(cfg["ntrials"])]))
 
 
@@ -112,7 +112,7 @@ def load(datafile):
     return [(float(r["a_rjup"]), float(r["precision_uas"]), float(r["m_min_Mearth"])) for r in rows]
 
 
-def plot(results, out=OUT):
+def plot(results, out=OUT, title=r"Mass Sensitivity vs Precision and Separation ($\Delta\chi^2>5$)"):
     VIR = plt.get_cmap("viridis")
     seps = sorted(set(a for a, _, _ in results))
     fig, ax = plt.subplots(figsize=(6.6, 4.9))
@@ -139,7 +139,7 @@ def plot(results, out=OUT):
     ax.set_ylim(1.5e-3, 4.0)
     ax.set_xlabel(r"Per-Epoch Astrometric Precision $\sigma$ ($\mu$as)")
     ax.set_ylabel(r"Minimum Detectable Moon Mass ($M_\oplus$)")
-    ax.set_title(r"Mass Sensitivity vs Precision and Separation ($\Delta\chi^2>5$)", fontsize=9.5)
+    ax.set_title(title, fontsize=9.5)
     ax.legend(frameon=False, fontsize=8, loc="lower right", ncol=1)
     ax.grid(True, which="both", ls=":", lw=0.4, alpha=0.5)
     fig.tight_layout(); fig.savefig(out, dpi=200, bbox_inches="tight")
@@ -152,11 +152,26 @@ if __name__ == "__main__":
     ap.add_argument("--plot", action="store_true", help="replot only, from the saved CSV")
     ap.add_argument("--recompute", action="store_true", help="ignore any saved CSV and recompute")
     ap.add_argument("--quick", action="store_true", help="tiny fast smoke test")
+    ap.add_argument("--stat", choices=["sine", "ellipse"], default="sine",
+                    help="detection statistic: 'sine' (Papers I/II) or 'ellipse' (matched filter)")
+    ap.add_argument("--nctrl", type=int, default=300, help="control trials for the ellipse calibration")
     args = ap.parse_args()
 
     seps, precs = SEPARATIONS, PRECS_UAS
-    cfg = dict(search=SEARCH, ntrials=NTRIALS, thr=THR, niter=NITER)
-    datafile = os.path.join(DATADIR, "precision_scaling.csv")
+    cfg = dict(search=SEARCH, ntrials=NTRIALS, thr=THR, niter=NITER, stat=args.stat)
+    suffix = "" if args.stat == "sine" else "_ellipse"
+    datafile = os.path.join(DATADIR, "precision_scaling%s.csv" % suffix)
+    out_fig = OUT if args.stat == "sine" else OUT.replace(".png", "_ellipse.png")
+
+    if args.stat == "ellipse" and not (args.plot or (os.path.exists(datafile) and not args.recompute)):
+        # calibrate the ellipse cut to the single-sinusoid FAR at this search config (once)
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        from ellipse_cut import calibrate_threshold
+        thr, far = calibrate_threshold(dict(astrometric_precision=10e-6, **SEARCH),
+                                       nctrl=args.nctrl, workers=args.workers)
+        cfg["thr"] = thr
+        print("ellipse cut = %.2f (matched FAR=%.3f) at pend=%.0f, ptestwidth=%.4f"
+              % (thr, far, SEARCH["pend"], SEARCH["ptestwidth"]), flush=True)
 
     if args.quick:      # small + fast: 1 separation, 2 precisions, few trials, narrow search
         seps, precs = [10.0], [10, 100]
@@ -166,10 +181,12 @@ if __name__ == "__main__":
 
     keep = set(seps)                                     # only plot the configured separations
     filt = lambda rs: [r for r in rs if r[0] in keep]
+    title = (r"Matched-Filter Mass Sensitivity vs Precision and Separation" if args.stat == "ellipse"
+             else r"Mass Sensitivity vs Precision and Separation ($\Delta\chi^2>5$)")
     if args.plot and os.path.exists(datafile):
-        plot(filt(load(datafile)))
+        plot(filt(load(datafile)), out=out_fig, title=title)
     elif os.path.exists(datafile) and not args.recompute:
         print("found", datafile, "-- replotting (use --recompute to regenerate)")
-        plot(filt(load(datafile)))
+        plot(filt(load(datafile)), out=out_fig, title=title)
     else:
-        plot(filt(compute(datafile, seps, precs, cfg, args.workers)))
+        plot(filt(compute(datafile, seps, precs, cfg, args.workers)), out=out_fig, title=title)

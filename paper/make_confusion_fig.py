@@ -34,8 +34,11 @@ sys.path.insert(0, os.path.join(HERE, os.pardir))       # repo root -> exomoonsi
 from exomoonsim.sim import SimParams, Moon, run_trial
 
 FIGDIR = os.path.join(HERE, "figs"); os.makedirs(FIGDIR, exist_ok=True)
-CACHE = os.path.join(HERE, "data", "_confusion.npz")
-OUT = os.path.join(FIGDIR, "confusion_vs_n.png")
+_ELL = "--ellipse" in sys.argv                          # matched-filter statistic + calibrated cut
+STAT = "ellipse" if _ELL else "sine"
+THR = 28.95 if _ELL else 5.0                            # calibrated ellipse cut (pend=60 search config)
+CACHE = os.path.join(HERE, "data", "_confusion%s.npz" % ("_ellipse" if _ELL else ""))
+OUT = os.path.join(FIGDIR, "confusion_vs_n%s.png" % ("_ellipse" if _ELL else ""))
 
 SUPER = [(20, 0.30), (12, 0.20), (30, 0.15), (8, 0.25), (16, 0.18)]   # nested moon set
 FRACS = [0.15, 0.55, 0.80, 0.35, 0.65]                                 # offset phases
@@ -48,7 +51,7 @@ def run_N(n):
     p = SimParams(astrometric_precision=1e-5, texp=1.0, pend=60.0, ptestwidth=0.0015, moons=moons)
     for mn, fr in zip(p.moons, FRACS[:n]):
         mn.t0 = fr * p._period_days(mn) / 365.25
-    d = run_trial(p, seed=7, return_diagnostics=True)["diag"]
+    d = run_trial(p, seed=7, return_diagnostics=True, recover_thr=THR, stat=STAT)["diag"]
     done = [x for x in d["recoveries"] if x["recovered"]]
     claimed = [r["best_period"] for r in done]
     nr = [x for x in d["recoveries"] if not x["recovered"]]
@@ -90,8 +93,9 @@ ax.plot(NS, leftover, "o-", color=VIR(0.70), lw=1.6, ms=6,
         label="Leftover at Claimed Periods (Excluded)")
 ax.plot(NS, oow, "s-", color=VIR(0.28), lw=1.6, ms=6,
         label="Largest Out-of-Window Peak")
-ax.axhline(5.0, color=VIR(0.05), ls=":", lw=1.1)
-ax.text(NS[-1], 5.3, r"$\Delta\chi^2=5$ threshold", fontsize=8, color="0.4", ha="right", va="bottom")
+ax.axhline(THR, color=VIR(0.05), ls=":", lw=1.1)
+ax.text(NS[-1], THR * 1.06, (r"$\Delta\chi^2_{\rm mf}=%.0f$ cut" % THR) if _ELL else r"$\Delta\chi^2=5$ threshold",
+        fontsize=8, color="0.4", ha="right", va="bottom")
 ax.set_xticks(NS)
 ax.set_xlabel("Number of Moons in the System")
 ax.set_ylabel(r"Null-Round Peak  $\Delta\chi^2$")

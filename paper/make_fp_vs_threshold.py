@@ -20,11 +20,13 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
-DATA = os.path.join(HERE, "data", "survey_50muas_ntrials50.npz")
+_ELL = "--ellipse" in sys.argv                 # matched-filter survey (calibrated cut in the npz)
+DATA = os.path.join(HERE, "data", "survey_50muas_ntrials50%s.npz" % ("_ellipse" if _ELL else ""))
 FIGDIR = os.path.join(HERE, "figs")
 os.makedirs(FIGDIR, exist_ok=True)
-OUT = os.path.join(FIGDIR, "fp_vs_threshold.png")
+OUT = os.path.join(FIGDIR, "fp_vs_threshold%s.png" % ("_ellipse" if _ELL else ""))
 
 d = np.load(DATA, allow_pickle=True)
 mass = np.asarray(d["mass_grid"], float)
@@ -80,7 +82,7 @@ ax[0].semilogy(cuts, np.clip(noise_far, 1e-4, None), color=C2, lw=1.6,
 ax[0].semilogy(cuts, np.clip(fpg, 1e-4, None), color=C1, lw=1.6,
                label="Grid False-Positive Fraction")
 ax[0].axvline(c_fid, color="0.6", ls=":", lw=1.0)
-ax[0].text(c_fid * 1.08, 0.8, r"$\Delta\chi^2=5$", color="0.5", fontsize=8, rotation=90, va="top")
+ax[0].text(c_fid * 1.08, 0.8, r"$\Delta\chi^2=%.0f$" % c_fid, color="0.5", fontsize=8, rotation=90, va="top")
 ax[0].set_xlabel(r"Detection Cut  $\Delta\chi^2 > c$")
 ax[0].set_ylabel("False-Positive Fraction")
 ax[0].set_ylim(3e-4, 1.0)
@@ -90,7 +92,7 @@ ax[0].legend(frameon=False, fontsize=8, loc="upper right")
 # (b) reliability & completeness vs cut
 ax[1].plot(cuts, reliability, color=C1, lw=1.6, label="Reliability  TP/(TP+FP)")
 ax[1].plot(cuts, completeness, color=C3, lw=1.6, ls="--",
-           label=r"Completeness (Rel. $\Delta\chi^2=5$)")
+           label=r"Completeness (Rel. $\Delta\chi^2=%.0f$)" % c_fid)
 ax[1].axvline(c_fid, color="0.6", ls=":", lw=1.0)
 ax[1].set_xlabel(r"Detection Cut  $\Delta\chi^2 > c$")
 ax[1].set_ylabel("Fraction")
