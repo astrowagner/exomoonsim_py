@@ -12,8 +12,13 @@ line is ``if __name__ == "__main__":`` (needed in the .py for multiprocessing on
 has that line stripped and its body dedented for the notebook, where ``__name__`` is
 already ``"__main__"`` and the guard is unnecessary.
 
-Run from the repo root:   python tutorials/_make_notebooks.py
+Run from the repo root:   python tutorials/_make_notebooks.py        # all tutorials
+                          python tutorials/_make_notebooks.py 02     # just tutorial 02
+
+NOTE: building discards any outputs stored in the .ipynb; run _execute_notebooks.py
+afterwards to regenerate them (rebuild only the tutorial you changed).
 """
+import sys
 import glob
 import json
 import os
@@ -75,6 +80,7 @@ def build(py_path):
 
 
 if __name__ == "__main__":
-    for py in sorted(glob.glob(os.path.join(HERE, "[0-9][0-9]_*.py"))):
+    pat = (sys.argv[1] + "*") if len(sys.argv) > 1 else "[0-9][0-9]_*"
+    for py in sorted(glob.glob(os.path.join(HERE, pat + ".py"))):
         out, n = build(py)
         print("wrote %s  (%d cells)" % (os.path.basename(out), n))

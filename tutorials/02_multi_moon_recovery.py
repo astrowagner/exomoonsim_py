@@ -196,9 +196,12 @@ for a, (lab, d) in zip(ax, [("Single sinusoid", d_sine), ("Matched filter", d_mf
         col = VIR(0.85) if is_real(d, x) else "crimson"
         a.errorbar(x["a_rjup"], x["mass"], yerr=x.get("mass_err", 0), fmt="o", ms=6, color=col, capsize=3)
     a.set_xscale("log"); a.set_yscale("log"); a.set_xlabel(r"Moon semimajor axis ($R_{\rm Jup}$)")
+    a.set_xticks([8, 10, 12, 20, 30]); a.set_xticklabels(["8", "10", "12", "20", "30"])
+    a.set_yticks([0.05, 0.07, 0.1]); a.set_yticklabels(["0.05", "0.07", "0.1"])
+    a.xaxis.set_minor_formatter(plt.NullFormatter()); a.yaxis.set_minor_formatter(plt.NullFormatter())
     n = sum(is_real(d, x) for x in rec)
     a.set_title("%s: %d/4 recovered" % (lab, n), fontsize=10)
-ax[0].set_ylabel(r"Moon mass ($M_\oplus$)"); ax[0].legend(frameon=False, fontsize=8)
+ax[0].set_ylabel(r"Moon mass ($M_\oplus$)"); ax[0].legend(frameon=False, fontsize=8, loc="lower left")
 plt.tight_layout(); plt.show()
 
 # %% [markdown]

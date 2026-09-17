@@ -7,10 +7,13 @@ terminal and easy to adapt for your own runs).
 
 | # | Tutorial | What you learn | Paper figures | FAST runtime |
 |---|---|---|---|---|
-| 1 | `01_signal_and_matched_filter` | What the moon signal looks like, the planet-motion sidebands, and why the projected-ellipse **matched filter** beats a single sinusoid | Fig. 2 | ~1 min |
-| 2 | `02_multi_moon_recovery` | Calibrating the matched-filter cut, iterative prewhitening on a two-moon system, and the four-moon sinusoid-vs-matched-filter comparison | Figs. 3–6, Table 3 | ~5 min |
-| 3 | `03_characterization` | The mass–inclination degeneracy, how the ellipse fit breaks it (mass **and** inclination), the recovered reflex ellipse, and the eccentricity limit | Fig. 1, Table 4, Fig. 12 | ~2 min |
-| 4 | `04_surveys_and_detection_maps` | Running a parallel survey, detection ("success") maps, false positives, the mass floor, and switching a survey to the matched filter | Figs. 8–9, 13 | ~3 min |
+| 1 | `01_signal_and_matched_filter` | What the moon signal looks like, the planet-motion sidebands, and why the projected-ellipse **matched filter** beats a single sinusoid | Fig. 2 | seconds |
+| 2 | `02_multi_moon_recovery` | Calibrating the matched-filter cut, iterative prewhitening on a two-moon system, and the four-moon sinusoid-vs-matched-filter comparison | Figs. 3–6, Table 3 | ~30 s |
+| 3 | `03_characterization` | The mass–inclination degeneracy, how the ellipse fit breaks it (mass **and** inclination), the recovered reflex ellipse, and the eccentricity limit | Fig. 1, Table 4, Fig. 12 | seconds |
+| 4 | `04_surveys_and_detection_maps` | Running a parallel survey, detection ("success") maps, false positives, the mass floor, and switching a survey to the matched filter | Figs. 8–9, 13 | ~1 min |
+
+The committed notebooks are **already executed** in `FAST` mode, so every plot and
+printed result is visible right here on GitHub without running anything.
 
 ## Setup
 
@@ -63,11 +66,19 @@ already `__main__`) and is omitted. Tutorials 1–3 use no worker processes.
 
 ## Regenerating the notebooks
 
-The notebooks are generated from the scripts, so edit the `.py` and rebuild:
+The notebooks are generated from the scripts, so edit the `.py`, rebuild, and
+re-execute to refresh the stored outputs:
 
 ```bash
-python tutorials/_make_notebooks.py
+python tutorials/_make_notebooks.py 02       # .py -> .ipynb for tutorial 02 (drops its stored outputs)
+python tutorials/_execute_notebooks.py 02    # run it and store its text + figures again
 ```
+
+Omit the number to rebuild/execute all four. Building discards a notebook's stored
+outputs, so rebuild only the tutorial you edited, then execute it.
+`_execute_notebooks.py` needs no Jupyter install (it captures printed text and
+matplotlib figures directly); if you have Jupyter, the standard tool is equivalent:
+`jupyter nbconvert --to notebook --execute --inplace tutorials/0*.ipynb`.
 
 Scripts use light cell markers — `# %%` for a code cell and `# %% [markdown]`
 followed by `# ` comment lines for prose. The module docstring becomes the title cell.
