@@ -69,6 +69,11 @@ signal in the residual, the periodogram, and the phase-folded detection — see
 [`examples/single_trial_diagnostics.py`](examples/single_trial_diagnostics.py)
 (`run_trial(..., return_diagnostics=True)` fed to `plots.plot_trial`).
 
+For a guided course through the science — the moon signal and its sidebands, the
+matched filter, multi-moon recovery, characterization, and surveys — see the four
+**tutorials** in [`tutorials/`](tutorials/README.md), each available as a notebook
+and a script with a `FAST` (laptop) / paper-configuration switch.
+
 ## What you get out
 
 Each survey produces six maps over (moon semimajor axis, moon mass):
