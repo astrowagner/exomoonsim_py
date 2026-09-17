@@ -26,10 +26,22 @@ from exomoonsim.plots import plot_trial
 
 # A clearly detectable moon: a few Earth masses, well separated, at 10 muas.
 # (Try nudging moon_mass down or astrometric_precision up to watch the signal
-#  sink into the noise -- the periodogram peak shrinks and the phase-fold blurs.)
+#  sink into the noise -- the periodogram peak shrinks and the phase-fold blurs.
+#  Once nothing clears the detection cut the figure says so explicitly: the
+#  residual panels are labeled "Nothing Recovered, Unchanged".)
+#
+# We set moon_ecc=0 here so the figure shows one clean recovery. The default
+# (moon_ecc=0.05) is worth trying too: the fitted model is a CIRCULAR reflex, so
+# an eccentric moon leaves its second harmonic in the residual, and for a signal
+# this strong the search claims that harmonic -- at exactly half the moon's
+# period -- as an extra "moon". You will see "1 Moon(s) In, 3 Recovered", with
+# the spurious claims visible in the "Recovered System" panel. That is a real
+# effect, not a bug; see the eccentricity discussion in Paper III (and
+# tutorials/03_characterization.py).
 params = SimParams(
     moon_a=20.0,                 # moon semimajor axis, Jupiter radii
     moon_mass=3.0,               # moon mass, Earth masses
+    moon_ecc=0.0,                # circular orbit (default 0.05 -- see note above)
     astrometric_precision=1e-5,  # 10 micro-arcseconds per epoch
 )
 

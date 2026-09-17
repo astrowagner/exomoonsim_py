@@ -212,7 +212,13 @@ def plot_trial(diag, filename=None, figsize=(14, 11), dpi=140):
     rec_list = diag.get("recoveries", [])
     thr = diag.get("recover_thr", 5.0)
     true_synods = [diag["true_synodic"]] + list(diag.get("companion_synodics", []))
-    nrows = 2 + max(1, len(rec_list))
+    n_rec = sum(1 for x in rec_list if x["recovered"])
+    # The prewhitening loop normally ends with a terminating (recovered=False) round, and the
+    # summary panels are drawn on it.  If every round claimed a signal the loop exits by
+    # exhausting its budget instead, so reserve an extra row and draw the summary there --
+    # otherwise the summary vanishes exactly when the recovery misbehaves.
+    has_term = any(not x["recovered"] for x in rec_list)
+    nrows = 2 + max(1, len(rec_list)) + (0 if has_term else 1)
     fig, ax = plt.subplots(nrows, 3, figsize=(figsize[0], 3.3 * nrows),
                            constrained_layout=True)
 
@@ -278,7 +284,68 @@ def plot_trial(diag, filename=None, figsize=(14, 11), dpi=140):
     a.axhline(0, color="0.6", lw=0.5, ls="--")
     a.set_ylim(_ylim90)
     a.set_xlabel("Time (days)"); a.set_ylabel("Residual (mas)")
-    a.set_title("Residual (First 90 d, Primary Removed)")
+    # with nothing recovered this residual is untouched -- don't claim a subtraction
+    a.set_title("Residual (First 90 d) — Nothing Recovered, Unchanged" if n_rec == 0
+                else "Residual (First 90 d, Primary Removed)")
+
+    def _draw_summary(ri):
+        """Columns 1-2 of a summary row: the recovered system, and the fully cleaned residual."""
+        # ---- summary A: recovered system in (a, mass), with mass uncertainties ----
+        sa = ax[2 + ri, 1]
+        inp = diag.get("input_moons", [])
+        recs = [x for x in rec_list if x["recovered"]]
+        if inp:
+            ia_, im_ = zip(*inp)
+            sa.scatter(ia_, im_, s=90, facecolors="none", edgecolors=_C_TRUE, lw=1.5, zorder=5)
+        for x in recs:
+            aa, mm = x["a_rjup"], x["mass"]
+            sa.errorbar(aa, mm, yerr=x.get("mass_err", 0.0), fmt="o", ms=6,
+                        color=_C_FIT, ecolor=_C_FIT, capsize=3, lw=1.2, zorder=4)
+            if "inclination" in x:
+                sa.annotate("i=%.0f°" % x["inclination"], (aa, mm), textcoords="offset points",
+                            xytext=(7, 3), fontsize=6, color=_C_FIT)
+        sa.set_xscale("log"); sa.set_yscale("log")
+        allx = [v[0] for v in inp] + [x["a_rjup"] for x in recs]
+        ally = [v[1] for v in inp] + [x["mass"] for x in recs]
+        if allx and ally:
+            xt = [c for c in (1, 2, 3, 5, 7, 10, 15, 20, 30, 50, 70, 100)
+                  if min(allx) * 0.7 <= c <= max(allx) * 1.4]
+            yt = [c for c in (0.02, 0.05, 0.1, 0.2, 0.3, 0.5, 1, 2, 5)
+                  if min(ally) * 0.6 <= c <= max(ally) * 1.6]
+            sa.set_xticks(xt); sa.set_xticklabels(["%g" % c for c in xt])
+            sa.set_yticks(yt); sa.set_yticklabels(["%g" % c for c in yt])
+            sa.xaxis.set_minor_formatter(ticker.NullFormatter())
+            sa.yaxis.set_minor_formatter(ticker.NullFormatter())
+            # pad the view so a lone (or overlapping input/recovered) point isn't in the corner
+            sa.set_xlim(min(allx) * 0.6, max(allx) * 1.7)
+            sa.set_ylim(min(ally) * 0.45, max(ally) * 2.2)
+        sa.set_xlabel("Moon Semimajor Axis (R$_{\\rm Jup}$)")
+        sa.set_ylabel("Moon Mass (M$_\\oplus$)")
+        sa.set_title("Recovered System ($i$ Labeled)")
+        sa.legend(handles=[
+            Line2D([0], [0], marker="o", ls="none", markerfacecolor="none",
+                   markeredgecolor=_C_TRUE, markersize=8, label="Input"),
+            Line2D([0], [0], marker="o", ls="none", color=_C_FIT, markersize=6,
+                   label="Recovered ±Stat")],
+            fontsize=6, loc="best")
+
+        # ---- summary B: 90-day residual, every recovered signal removed ----
+        # NOTE: with nothing recovered this is the UNCHANGED residual, so say so in the title
+        # rather than claiming signals were removed.
+        sb = ax[2 + ri, 2]
+        rall = np.asarray(diag.get("rres_allremoved", rres))
+        srall = np.convolve(rall, np.ones(k) / k, mode="same")
+        if prec_mas:
+            sb.axhspan(-prec_mas, prec_mas, color="0.88", zorder=0, label="±1$\\sigma$/epoch")
+        sb.scatter(td[z90], rall[z90] * MAS, s=5, color=_C_OBS, alpha=0.4)
+        sb.plot(td[z90], srall[z90] * MAS, "-", color=_C_TRUE, lw=0.8)
+        sb.axhline(0, color="0.6", lw=0.5, ls="--")
+        sb.set_ylim(_ylim90)
+        sb.set_xlabel("Time (days)"); sb.set_ylabel("Residual (mas)")
+        sb.set_title("Residual (First 90 d) — Nothing Recovered, Unchanged" if n_rec == 0
+                     else "Residual (First 90 d, %d Recovered Signal%s Removed)"
+                          % (n_rec, "" if n_rec == 1 else "s"))
+        sb.legend(fontsize=6, loc="upper right")
 
     # ===== rows 2+: iterative recovery, one row per prewhitening round =====
     for ri, rc in enumerate(rec_list):
@@ -313,57 +380,15 @@ def plot_trial(diag, filename=None, figsize=(14, 11), dpi=140):
             mx.set_title("Phase-Fold Minus Sine")
         else:
             pa.set_title(r"No Further Signal ($\chi^2$ < %.0f)" % thr)
-            # ---- summary A: recovered system in (a, mass), with mass uncertainties ----
-            sa = ax[2 + ri, 1]
-            inp = diag.get("input_moons", [])
-            recs = [x for x in rec_list if x["recovered"]]
-            if inp:
-                ia_, im_ = zip(*inp)
-                sa.scatter(ia_, im_, s=90, facecolors="none", edgecolors=_C_TRUE,
-                           lw=1.5, zorder=5)
-            for x in recs:
-                aa, mm = x["a_rjup"], x["mass"]
-                sa.errorbar(aa, mm, yerr=x.get("mass_err", 0.0), fmt="o", ms=6,
-                            color=_C_FIT, ecolor=_C_FIT, capsize=3, lw=1.2, zorder=4)
-                if "inclination" in x:
-                    sa.annotate("i=%.0f°" % x["inclination"], (aa, mm),
-                                textcoords="offset points", xytext=(7, 3),
-                                fontsize=6, color=_C_FIT)
-            sa.set_xscale("log"); sa.set_yscale("log")
-            allx = [v[0] for v in inp] + [x["a_rjup"] for x in recs]
-            ally = [v[1] for v in inp] + [x["mass"] for x in recs]
-            if allx and ally:
-                xt = [c for c in (1, 2, 3, 5, 7, 10, 15, 20, 30, 50, 70, 100)
-                      if min(allx) * 0.7 <= c <= max(allx) * 1.4]
-                yt = [c for c in (0.02, 0.05, 0.1, 0.2, 0.3, 0.5, 1, 2, 5)
-                      if min(ally) * 0.6 <= c <= max(ally) * 1.6]
-                sa.set_xticks(xt); sa.set_xticklabels(["%g" % c for c in xt])
-                sa.set_yticks(yt); sa.set_yticklabels(["%g" % c for c in yt])
-                sa.xaxis.set_minor_formatter(ticker.NullFormatter())
-                sa.yaxis.set_minor_formatter(ticker.NullFormatter())
-            sa.set_xlabel("Moon Semimajor Axis (R$_{\\rm Jup}$)")
-            sa.set_ylabel("Moon Mass (M$_\\oplus$)")
-            sa.set_title("Recovered System ($i$ Labeled)")
-            sa.legend(handles=[
-                Line2D([0], [0], marker="o", ls="none", markerfacecolor="none",
-                       markeredgecolor=_C_TRUE, markersize=8, label="Input"),
-                Line2D([0], [0], marker="o", ls="none", color=_C_FIT, markersize=6,
-                       label="Recovered ±Stat")],
-                fontsize=6, loc="best")
-            # ---- summary B: 90-day residual, FULL recovered system removed ----
-            sb = ax[2 + ri, 2]
-            rall = np.asarray(diag.get("rres_allremoved", rres))
-            srall = np.convolve(rall, np.ones(k) / k, mode="same")
-            if prec_mas:
-                sb.axhspan(-prec_mas, prec_mas, color="0.88", zorder=0,
-                           label="±1$\\sigma$/epoch")
-            sb.scatter(td[z90], rall[z90] * MAS, s=5, color=_C_OBS, alpha=0.4)
-            sb.plot(td[z90], srall[z90] * MAS, "-", color=_C_TRUE, lw=0.8)
-            sb.axhline(0, color="0.6", lw=0.5, ls="--")
-            sb.set_ylim(_ylim90)
-            sb.set_xlabel("Time (days)"); sb.set_ylabel("Residual (mas)")
-            sb.set_title("Residual (First 90 d, All Recovered Removed)")
-            sb.legend(fontsize=6, loc="upper right")
+            _draw_summary(ri)
+
+    # every round claimed a signal -> no terminating row was drawn; put the summary on its own
+    if not has_term:
+        ax[2 + len(rec_list), 0].axis("off")
+        ax[2 + len(rec_list), 0].text(
+            0.5, 0.5, "Round budget exhausted\n(every round claimed a signal)",
+            ha="center", va="center", fontsize=8, color="0.35", transform=ax[2 + len(rec_list), 0].transAxes)
+        _draw_summary(len(rec_list))
 
     fig.suptitle(
         "Single Trial   |   %d Moon(s) In, %d Recovered   |   %.0f µas/Epoch   |   "
